@@ -13,7 +13,7 @@ builder="$(jq -r '.provider' "$AXIOM_PATH"/axiom.json)"
 provisioner="$1"
 start_time=$(date +%s)
 op_ssh_password=$(cat /dev/urandom| base64 | head -c 128 | tr -d '+=-' | tr -d '\n' | tr -d /)
-account_path=$(ls -la $AXIOM_PATH/axiom.json | rev | cut -d " " -f 1 | rev)
+account_path=$(ls -la "$AXIOM_PATH"/axiom.json | rev | cut -d " " -f 1 | rev)
 provider="$(cat "$AXIOM_PATH/axiom.json" | jq -r '.provider')"
 
 # ###########################################################################################################
@@ -41,9 +41,9 @@ if [ -z "$provisioner" ]; then
                provisioner="barebones"
     fi
     if [[ $ans == "custom" ]] || [[ $ans == "Custom" ]]; then
-               echo -e "${Red}Your Packer JSON must be located in "$AXIOM_PATH/images/provisioners/". Make sure to move it.${Color_Off}"
-               echo -e "${Green}Listing all provisioners available in "$AXIOM_PATH/images/provisioners/" ...${Color_Off}"
-               ls -1 $AXIOM_PATH/images/provisioners/ | sort -u | sed -e 's/\.json$//' | grep -v -w 'ibm-base-image-create.sh' 
+               echo -e "${Red}Your Packer JSON must be located in ""$AXIOM_PATH"/images/provisioners/". Make sure to move it.${Color_Off}"
+               echo -e "${Green}Listing all provisioners available in ""$AXIOM_PATH"/images/provisioners/" ...${Color_Off}"
+               ls -1 "$AXIOM_PATH"/images/provisioners/ | sort -u | sed -e 's/\.json$//' | grep -v -w 'ibm-base-image-create.sh' 
                echo -e -n "${Green}Enter the provisioner filename. \n>>${Color_Off}"
                read ans
                provisioner=$ans
@@ -65,13 +65,14 @@ sleep 5
 # ###########################################################################################################
 # add data to account.json i.e account_path
 snapshot_name=axiom-$provisioner-$(date +%s)
-jq '.op="'$op_ssh_password'"' <"$account_path">"$AXIOM_PATH"/tmp.json ; mv "$AXIOM_PATH"/tmp.json "$account_path"
-jq '.imageid="'$snapshot_name'"' <"$account_path">"$AXIOM_PATH"/tmp.json ; mv "$AXIOM_PATH"/tmp.json "$account_path"
+jq '.op="'"$op_ssh_password"'"' <"$account_path">"$AXIOM_PATH"/tmp.json ; mv "$AXIOM_PATH"/tmp.json "$account_path"
+jq '.imageid="'"$snapshot_name"'"' <"$account_path">"$AXIOM_PATH"/tmp.json ; mv "$AXIOM_PATH"/tmp.json "$account_path"
 jq '.provisioner="'$provisioner'"' <"$account_path">"$AXIOM_PATH"/tmp.json ; mv "$AXIOM_PATH"/tmp.json "$account_path"
 
 # ###########################################################################################################
-# this code unlikely works but seems to have no consequence: TODO remove 
-if [ ! -z $1 ]
+# exit if the builder or provisioner can not be found
+#
+if [ ! -z "$1" ]
 then
 	provisioner="$1"
 fi
@@ -94,7 +95,7 @@ fi
 # ###########################################################################################################
 # Generate the Packer final provisioner by combining the Cloud Provider builder and provisioner file
 image_path="$AXIOM_PATH/images/axiom.json"
-$AXIOM_PATH/interact/axiom-provider "$provider"
+"$AXIOM_PATH"/interact/axiom-provider "$provider"
 "$AXIOM_PATH"/interact/generate_packer "$builder" "$provisioner"
 
 # ###########################################################################################################
@@ -104,18 +105,18 @@ $AXIOM_PATH/interact/axiom-provider "$provider"
 # TIPS: if you want to swap out the SSH key axiom uses, just edit the account.json.
 # For example: change key:value pair "sshkey": "id_rsa" to "sshkey": "axiom_rsa" and rerun axiom-build.
 
-account_path=$(ls -la $AXIOM_PATH/axiom.json | rev | cut -d " " -f 1 | rev)
+account_path=$(ls -la "$AXIOM_PATH"/axiom.json | rev | cut -d " " -f 1 | rev)
 sshkey="$(cat "$AXIOM_PATH/axiom.json" | jq -r '.sshkey')"
 
 # If custom SSH key is found in "$AXIOM_PATH/axiom.json", add it to Packer builder
-if [ -f ~/.ssh/$sshkey ] ; then
+if [ -f ~/.ssh/"$sshkey" ] ; then
  echo -e "${Blue}Adding $sshkey SSH key to Packer Builder${Color_Off}"
- cat ~/.ssh/$sshkey.pub >$AXIOM_PATH/configs/authorized_keys
+ cat ~/.ssh/"$sshkey".pub >"$AXIOM_PATH"/configs/authorized_keys
 
 # If axiom_rsa key is already created but not in "$AXIOM_PATH/axiom.json", add it to $AXIOM_PATH/axiom.json" and Packer builder
 elif [ -f ~/.ssh/axiom_rsa ] ; then
  echo -e "${Blue}Adding axiom_rsa SSH key to Packer Builder${Color_Off}"
- cat ~/.ssh/axiom_rsa.pub >$AXIOM_PATH/configs/authorized_keys
+ cat ~/.ssh/axiom_rsa.pub >"$AXIOM_PATH"/configs/authorized_keys
  jq '.sshkey="'axiom_rsa'"' <"$account_path">"$AXIOM_PATH"/tmp.json ; mv "$AXIOM_PATH"/tmp.json "$account_path"
 
 # If axiom_rsa is not created, create it and then add it to "$AXIOM_PATH/axiom.json" and Packer builder
@@ -123,14 +124,14 @@ else
  echo -e "${Blue}Creating axiom SSH key in ~/.ssh/axiom_rsa.pub and adding it to Packer Builder${Color_Off}"
  ssh-keygen -b 2048 -t rsa -f ~/.ssh/axiom_rsa -q -N ""
  jq '.sshkey="'axiom_rsa'"' <"$account_path">"$AXIOM_PATH"/tmp.json ; mv "$AXIOM_PATH"/tmp.json "$account_path"
- cat ~/.ssh/axiom_rsa.pub >$AXIOM_PATH/configs/authorized_keys
+ cat ~/.ssh/axiom_rsa.pub >"$AXIOM_PATH"/configs/authorized_keys
 fi
 
 if [[ ! -f "$AXIOM_PATH/configs/authorized_keys" ]]
 then
-	echo -e "${BRed}You have no authorized keys file at $AXIOM_PATH/configs/authorized_keys"
-	echo -e  "Please run 'cat ~/.ssh/id_rsa.pub >> $AXIOM_PATH/configs/authorized_keys' and e-run axiom-build"
-	echo -e "You may need to generate a fresh SSH keypair...${Color_Off}"
+	echo -e "${BRed}You have no authorized keys file in $AXIOM_PATH/configs/authorized_keys"
+	echo -e  "Manaully specify SSH key in ~/.axiom/axiom.json or rerun axiom-configure"
+	 echo -e "You may need to generate a fresh SSH keypair...${Color_Off}"
 	exit
 fi
 
@@ -157,12 +158,12 @@ echo -e "${BWhite}Building image $provisioner for provider $builder... This can 
 if packer build -var-file "$AXIOM_PATH"/axiom.json -var "variant=$provisioner" -var "op_random_password=$op_ssh_password" -var "snapshot_name=$snapshot_name" "$image_path";
 then
 	end_time=$(date +%s)
-	seconds="$(expr $end_time - $start_time)"
+	seconds="$(expr "$end_time" - "$start_time")"
 	time=""
 		
 	if [[ "$seconds" -gt 59 ]]
 	then
-		minutes=$(expr $seconds / 60)
+		minutes=$(expr "$seconds" / 60)
 		time="$minutes minutes"
 	else
 		time="$seconds seconds"
