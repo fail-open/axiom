@@ -57,7 +57,7 @@ OS=$(lsb_release -i | awk '{ print $3 }')
 sudo apt-get update
 sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg -y -qq
 AZ_REPO=$(lsb_release -cs)
-if [ $AZ_REPO == "kali-rolling" ]; then
+if [ "$AZ_REPO" == "kali-rolling" ]; then
 check_version=$(cat /proc/version | awk '{ print $6 $7 }' | tr -d '()' | cut -d . -f 1)
 case $check_version in                                
   Debian10)
@@ -104,9 +104,9 @@ az login
 az group create -n axiom -l "$region"
 
 bac="$(az ad sp create-for-rbac --query "{ client_id: appId, client_secret: password, tenant_id: tenant }")" 
-client_id="$(echo $bac | jq -r '.client_id')"
-client_secret="$(echo $bac | jq -r '.client_secret')"
-tenant_id="$(echo $bac | jq -r '.tenant_id')"
+client_id="$(echo "$bac" | jq -r '.client_id')"
+client_secret="$(echo "$bac" | jq -r '.client_secret')"
+tenant_id="$(echo "$bac" | jq -r '.tenant_id')"
 sub_id="$(az account show --query "{ subscription_id: id }" | jq -r .subscription_id)"
 
 echo -e -n "${Green}Please enter your GPG Recipient Email (for encryption of boxes): (optional, press enter) \n>> ${Color_Off}"
@@ -129,7 +129,7 @@ fi
 data="$(echo "{\"client_id\":\"$client_id\",\"client_secret\":\"$client_secret\",\"tenant_id\":\"$tenant_id\",\"subscription_id\":\"$sub_id\",\"region\":\"$region\",\"resource_group\":\"axiom\",\"provider\":\"azure\",\"default_size\":\"$size\",\"appliance_name\":\"$appliance_name\",\"appliance_key\":\"$appliance_key\",\"appliance_url\":\"$appliance_url\", \"email\":\"$email\",\"use_azure_cli_auth\":\"$use_azure_cli_auth\"}")"
 
 echo -e "${BGreen}Profile settings below: ${Color_Off}"
-echo $data | jq
+echo "$data" | jq
 echo -e "${BWhite}Press enter if you want to save these to a new profile, type 'r' if you wish to start again.${Color_Off}"
 read ans
 
@@ -147,6 +147,6 @@ if [[ "$title" == "" ]]; then
     echo -e "${Blue}Named profile 'personal'${Color_Off}"
 fi
 
-echo $data | jq > "$AXIOM_PATH/accounts/$title.json"
+echo "$data" | jq > "$AXIOM_PATH/accounts/$title.json"
 echo -e "${BGreen}Saved profile '$title' successfully!${Color_Off}"
-$AXIOM_PATH/interact/axiom-account $title
+"$AXIOM_PATH"/interact/axiom-account $title
