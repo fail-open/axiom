@@ -91,9 +91,9 @@ fi
 
 function getUsernameAPIkey {
 email=$(cat ~/.bluemix/config.json  | grep Owner | cut -d '"' -f 4)
-username=$(ibmcloud sl user list | grep $email | tr -s ' ' | cut -d ' ' -f 2)
-accountnumber=$(ibmcloud sl user list | grep $email | tr -s ' ' | cut -d ' ' -f 1)
-token=$(ibmcloud sl user detail $accountnumber --keys  | grep APIKEY | tr -s ' ' | cut -d ' ' -f 2)
+username=$(ibmcloud sl user list | grep "$email" | tr -s ' ' | cut -d ' ' -f 2)
+accountnumber=$(ibmcloud sl user list | grep "$email" | tr -s ' ' | cut -d ' ' -f 1)
+token=$(ibmcloud sl user detail "$accountnumber" --keys  | grep APIKEY | tr -s ' ' | cut -d ' ' -f 2)
 if [ -z "$token" ]
 then
 echo -e -n "${Green}Create an IBM Classic API key (for packer) here: https://cloud.ibm.com/iam/apikeys (required): \n>> ${Color_Off}"
@@ -115,7 +115,7 @@ while [[ "$ibm_cloud_api_key" == "" ]]; do
 	echo -e -n "${Green}Please enter your IBM Cloud API key (required): \n>> ${Color_Off}"
 	read ibm_cloud_api_key
 done
-ibmcloud login --apikey=$ibm_cloud_api_key --no-region
+ibmcloud login --apikey="$ibm_cloud_api_key" --no-region
 getUsernameAPIkey
 }
 
@@ -159,7 +159,7 @@ if [[ "$ans" == "Y" ]]; then
 fi
 data="$(echo "{\"do_key\":\"$token\",\"ibm_cloud_api_key\":\"$ibm_cloud_api_key\",\"region\":\"$region\",\"provider\":\"ibm\",\"default_size\":\"$size\",\"cpu\":\"$cpu\",\"username\":\"$username\",\"base_image_id\":\"$base_image_id\",\"appliance_name\":\"$appliance_name\",\"appliance_key\":\"$appliance_key\",\"appliance_url\":\"$appliance_url\", \"email\":\"$email\"}")"
 echo -e "${BGreen}Profile settings below: ${Color_Off}"
-echo $data | jq
+echo "$data" | jq
 echo -e "${BWhite}Press enter if you want to save these to a new profile, type 'r' if you wish to start again.${Color_Off}"
 read ans
 if [[ "$ans" == "r" ]];
@@ -173,9 +173,9 @@ if [[ "$title" == "" ]]; then
     title="personal"
     echo -e "${Blue}Named profile 'personal'${Color_Off}"
 fi
-echo $data | jq > "$AXIOM_PATH/accounts/$title.json"
+echo "$data" | jq > "$AXIOM_PATH/accounts/$title.json"
 echo -e "${BGreen}Saved profile '$title' successfully!${Color_Off}"
-$AXIOM_PATH/interact/axiom-account $title
+"$AXIOM_PATH"/interact/axiom-account $title
 }
 
 prompt="Choose how to authenticate to IBM Cloud:"
