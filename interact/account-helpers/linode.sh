@@ -101,7 +101,7 @@ data="$(echo "{\"do_key\":\"$token\",\"region\":\"$region\",\"provider\":\"linod
 
 
 echo -e "${BGreen}Profile settings below: ${Color_Off}"
-echo $data | jq
+echo "$data" | jq
 echo -e "${BWhite}Press enter if you want to save these to a new profile, type 'r' if you wish to start again.${Color_Off}"
 read ans
 
@@ -119,9 +119,9 @@ if [[ "$title" == "" ]]; then
     echo -e "${Blue}Named profile 'personal'${Color_Off}"
 fi
 
-echo $data | jq > "$AXIOM_PATH/accounts/$title.json"
+echo "$data" | jq > "$AXIOM_PATH/accounts/$title.json"
 echo -e "${BGreen}Saved profile '$title' successfully!${Color_Off}"
-$AXIOM_PATH/interact/axiom-account $title
+"$AXIOM_PATH"/interact/axiom-account $title
 echo -e -n "${Yellow}Would you like me to open a ticket to get an image increase to 18GB for you?${Color_Off} [y]/n >> "
 read acc
 
