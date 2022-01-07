@@ -47,7 +47,8 @@ OS=$(lsb_release -i | awk '{ print $3 }')
    if [[ $OS == "Arch" ]] || [[ $OS == "ManjaroLinux" ]]; then
       sudo pacman -Syu doctl --noconfirm
    else
-      wget -O /tmp/doctl.tar.gz https://github.com/digitalocean/doctl/releases/download/v1.66.0/doctl-1.66.0-linux-amd64.tar.gz && tar -xvzf /tmp/doctl.tar.gz && sudo mv doctl /usr/bin/doctl && rm /tmp/doctl.tar.gz
+      wget -q -O /tmp/doctl.tar.gz https://github.com/digitalocean/doctl/releases/download/v1.66.0/doctl-1.66.0-linux-amd64.tar.gz && tar -xvzf /tmp/doctl.tar.gz && sudo mv doctl /usr/bin/doctl && rm /tmp/doctl.tar.gz
+   fi
    fi
 fi
 
@@ -78,7 +79,7 @@ done
 doctl auth init -t "$token" | grep -vi "using token"
 
 echo -e -n "${Green}Autoselecting default region based on ping...${Color_Off}"
-default_region="$(for region in $(doctl compute region list | grep -v false | grep -v 'Slug' | awk '{ print $1 }'); do echo -n "$region,"; ping -c 1 speedtest-$region.digitalocean.com | grep "avg" | awk '{ print $4 }' | tr "/" ' ' | cut -d " " -f 1; done | sort -k2 -t , -n | head -n 1 | cut -d "," -f 1)"
+default_region="$(for region in $(doctl compute region list | grep -v false | grep -v 'Slug' | awk '{ print $1 }'); do echo -n "$region,"; ping -c 1 speedtest-"$region".digitalocean.com | grep "avg" | awk '{ print $4 }' | tr "/" ' ' | cut -d " " -f 1; done | sort -k2 -t , -n | head -n 1 | cut -d "," -f 1)"
 
 echo -e -n "${Green}Please enter your default region: (Default '$default_region', press enter) \n>> ${Color_Off}"
 read region
@@ -113,7 +114,7 @@ fi
 data="$(echo "{\"do_key\":\"$token\",\"region\":\"$region\",\"provider\":\"do\",\"default_size\":\"$size\",\"appliance_name\":\"$appliance_name\",\"appliance_key\":\"$appliance_key\",\"appliance_url\":\"$appliance_url\", \"email\":\"$email\"}")"
 
 echo -e "${BGreen}Profile settings below: ${Color_Off}"
-echo $data | jq
+echo "$data" | jq
 echo -e "${BWhite}Press enter if you want to save these to a new profile, type 'r' if you wish to start again.${Color_Off}"
 read ans
 
@@ -131,9 +132,9 @@ if [[ "$title" == "" ]]; then
     echo -e "${Blue}Named profile 'personal'${Color_Off}"
 fi
 
-echo $data | jq > "$AXIOM_PATH/accounts/$title.json"
+echo "$data" | jq > "$AXIOM_PATH/accounts/$title.json"
 echo -e "${BGreen}Saved profile '$title' successfully!${Color_Off}"
-$AXIOM_PATH/interact/axiom-account $title
+"$AXIOM_PATH"/interact/axiom-account $title
 
 }
 
