@@ -236,7 +236,7 @@ total_instances="$(wc -l "$tmp/hosts" | awk '{ print $1 }')"
 # Add tmp sockets to sshconfig
 #
 mkdir -p "$tmp/sockets/"
-socket_tmp=$(echo "$tmp/sockets/")
+socket_tmp=$(echo "$tmp/sockets")
 cat <<EOT >> $(echo "$sshconfig")
 Host * 
     ControlMaster auto 
