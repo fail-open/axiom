@@ -66,14 +66,14 @@ function usage() {
         echo -e "${BWhite}Examples:${Color_Off}"
         echo -e "  ${Blue}axiom-exec id ${Color_Off} # Execute command id across all instances currently selected.conf (located in ~/.axiom/selected.conf)"
         echo -e "  ${Blue}axiom-exec 'sleep \$((\$RANDOM % 10)) && echo done' --fleet testy01 ${Color_Off} # Evaluate complex one-liners on instance named tasty01"
-        echo -e "  ${Blue}axiom-exec ifconfig --fleet testy\* ${Color_Off} # Execute ifconfig on testy fleet (you might have to escape the asterisk)"
-        echo -e "  ${Blue}axiom-exec 'sleep 10' -q --tmux SessionName+123 --cache --fleet OtherFleet\* ${Color_Off} # Quietly execute command(s) inside a detacted tmux session on the remote instances with custom session name." 
-        echo -e "  ${Blue}axiom-exec whoami -q --cache --sshconfig ~/.axiom/tmp/axiom-exec+1234567890/sshconfig --fleet oldfleet\* --tmux' ${Color_Off} # Specify the axiom SSH config to use (default is ~/.axiom/.sshconfig)"
+        echo -e "  ${Blue}axiom-exec ifconfig --fleet 'testy\*' ${Color_Off} # Execute ifconfig on testy fleet. For wildcard support, wrap fleet value in single quotes and escape the asterisk."
+        echo -e "  ${Blue}axiom-exec 'sleep 10' -q --tmux SessionName+123 --cache --fleet 'OtherFleet\*' ${Color_Off} # Quietly execute command(s) inside a detacted tmux session on the remote instances with custom session name." 
+        echo -e "  ${Blue}axiom-exec whoami -q --cache --sshconfig ~/.axiom/tmp/axiom-exec+1234567890/sshconfig --fleet 'oldfleet\*' --tmux' ${Color_Off} # Specify the axiom SSH config to use (default is ~/.axiom/.sshconfig)"
         echo -e "${BWhite}Usage:${Color_Off}"
         echo -e "  <commands> required positional string"
         echo -e "    Command(s) to run on the remote axiom instances, multiple commands must be wrapped in single or double quotes."
-        echo -e "  -f/--fleet <myinstance or myfleet\*>"
-        echo -e "    Instance or fleet prefix to execute on (default is ~/.axiom/selected.conf), supports wildcard (e.g. myfleet\*). Escaping the asterisk may be necessary."   
+        echo -e "  -f/--fleet <myinstance or 'myfleet\*'>"
+        echo -e "    Instance or fleet prefix to execute on (default is ~/.axiom/selected.conf). For wildcard support, wrap fleet value in single quotes and escape the asterisk."   
         echo -e "  --tmux <optional tmux session name>"
         echo -e "    Execute commands in a detacted tmux session (commands run in the background). The default tmux session name is axiom-exec+\$TIMESTAMP, or supply a custom tmux session name"
         echo -e "  --sshconfig <sshconfig_file> (optional string)"
@@ -250,7 +250,7 @@ EOT
 if [ -z ${fleet:+x} ]; then
  instances=$(cat "$tmp/hosts")
 else
- instances=$(query_instances_cache "$fleet*")
+ instances=$(query_instances_cache "$fleet")
  echo "$instances" | tr ' ' '\n' > "$tmp/hosts"
  total_instances="$(wc -l "$tmp/hosts" | awk '{ print $1 }')"
 fi
